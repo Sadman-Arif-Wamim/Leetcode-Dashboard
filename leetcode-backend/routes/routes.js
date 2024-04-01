@@ -4,6 +4,7 @@ const axios = require('axios');
 require('dotenv').config();
 const UserCalendar = require('../models/user-calender');
 const LanguageProblemCount = require('../models/user-languages');
+const ProblemsSolvedBeatsStats = require('../models/user-questioncount');
 
 router.get('/leetcode-data', async (req, res) => {
     const graphqlQuery = {
@@ -99,6 +100,56 @@ router.get('/leetcode-data1', async (req, res) => {
       console.error(error);
       res.status(500).send('Error fetching LeetCode data');
     }
+});
+
+
+router.get('/leetcode-data2', async (req, res) => {
+  const constGraph = {
+    operationName: "userProblemsSolved",
+    query: `
+      query userProblemsSolved($username: String!) {
+        allQuestionsCount {
+          difficulty
+          count
+         } 
+         matchedUser(username: $username){
+          problemsSolvedBeatsStats{
+            difficulty
+            percentage
+          } 
+          submitStatsGlobal {
+            acSubmissionNum {
+              difficulty
+              count
+            }
+          }
+        }
+      }
+    `,
+    variables: {
+      username: process.env.USER_NAME, 
+    }
+  };
+
+  const options = {
+    method: 'POST',
+    url: 'https://leetcode.com/graphql',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: constGraph, 
+  };
+
+  try {
+      const response = await axios(options);
+      const userData = response.data.data.matchedUser.problemsSolvedBeatsStats;
+      const problemsSolvedBeatsStats = userData.map(item => new ProblemsSolvedBeatsStats(item.difficulty, item.percentage));
+      res.json(problemsSolvedBeatsStats);
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Error fetching LeetCode data');
+  }
 });
 
 module.exports = router;
