@@ -70,7 +70,7 @@ router.get('/leetcode-data1', async (req, res) => {
       `,
       variables: {
         username: process.env.USER_NAME,
-        year: 2023 
+        year: 2024 
       }
     };
 
